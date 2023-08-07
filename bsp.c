@@ -1,8 +1,9 @@
 #include "bsp.h"
 #include "stm32f10x.h"
+#include "Miros.h"
 
 
-static volatile uint32_t tick = 0;
+static uint32_t volatile tick = 0;
 
 void bsp_init (void){
 	
@@ -15,13 +16,16 @@ void bsp_init (void){
 	__enable_irq();
 	SystemCoreClockUpdate();
 	SystemInit();
+	NVIC_SetPriority(SysTick_IRQn,0); 
 	
 }
 
 void SysTick_Handler (void){
 	
-		++tick;
-		
+	++tick;	
+	__disable_irq();
+	OS_sched();
+	__enable_irq();
 }
 
 uint32_t BSP_tickctr (void){
