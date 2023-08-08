@@ -1,8 +1,6 @@
 #include <stdint.h>
 #include "Miros.h"
 
-extern void __disable_irq();
-extern void __enable_irq();
 
 OSThread * volatile OS_curr;	/* pointer to the current thread */
 OSThread * volatile OS_next;	/*pointer to the next thread */
@@ -56,16 +54,27 @@ void OSThread_start(
 				
 }
 
+
 void PendSV_Handler (void){
 	
 	void *sp;
 		
 	__disable_irq();
 	if (OS_curr != (OSThread *)0){
-			OS_curr->sp = sp;
+		__asm (	
+			"PUSH		{r4-r11}\n"
+			"LDR		r1,=OS_curr\n"
+			"LDR		r1,[r1,#0x00]\n"					
+			"STR		sp,[r1,#0x00]\n"
+		);
+		OS_curr->sp = sp;	
 	}
 	sp = OS_next->sp;
 	OS_curr = OS_next;
 	
+	__asm ("POP	{r4-r11}");
+	
 	__enable_irq();
+	
+
 }
