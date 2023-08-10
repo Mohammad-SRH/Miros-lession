@@ -24,7 +24,7 @@ void OSThread_start(
 		uint32_t *stk_limit;
 	
 		*(--sp) = (1U<<24); // xPSR->Thumb 
-		*(--sp) = (uint32_t)&treadHandler; //PC
+		*(--sp) = (uint32_t)treadHandler; //PC
 		*(--sp) = 0x0000000EU; // LR
 		*(--sp) = 0x0000000CU; // R12
 		*(--sp) = 0x00000003U; // R3
@@ -57,24 +57,30 @@ void OSThread_start(
 
 void PendSV_Handler (void){
 	
-	void *sp;
 		
 	__disable_irq();
-	if (OS_curr != (OSThread *)0){
-		__asm (	
-			"PUSH		{r4-r11}\n"
-			"LDR		r1,=OS_curr\n"
-			"LDR		r1,[r1,#0x00]\n"					
-			"STR		sp,[r1,#0x00]\n"
-		);
-		OS_curr->sp = sp;	
+	if (OS_curr != (OSThread *)0){		
+		__asm ("PUSH		{r4-r11}");
+		__asm("LDR      r0,=OS_curr");
+		__asm("LDR      r1,[r0,#0x00]");
+		__asm("LDR      r1,[r1,#0x00]");
+		__asm("STR      sp,[r1,#0x00]");
+
 	}
-	sp = OS_next->sp;
+//	sp = OS_next->sp;	
+//	__asm("MOVW     r0,=OS_next");
+//	__asm("MOVT     r0,=OS_next");
+	__asm("LDR      r0,=OS_next");
+//	__asm("LDR      r1,[r0,#0x00]");
+	__asm("LDR      r0,[r0,#0x00]");
+	__asm("LDR      sp,[r0,#0x00]");
+	
 	OS_curr = OS_next;
 	
 	__asm ("POP	{r4-r11}");
-	
 	__enable_irq();
 	
 
 }
+
+
