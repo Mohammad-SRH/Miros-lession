@@ -1,25 +1,37 @@
 #include <stdint.h>
 #include "Miros.h"
+#include "qassert.h"
+
+Q_DEFINE_THIS_FILE
 
 
 OSThread * volatile OS_curr;	/* pointer to the current thread */
 OSThread * volatile OS_next;	/*pointer to the next thread */
+OSThread *OS_Thread[32 + 1];	/*Array of thread start from */
+uint8_t OS_threadNum;					/*number of thread tarted so far */
+uint8_t OS_currIndex;					/*current thread index for round robin scheual */
 
 void OS_init (void){
 	*(uint32_t volatile*)0xE000ED20 |= (0xFFU << 16);
 }
 
+void OS_run(void){
+	OS_onStartup();
+
+	__disable_irq();
+	OS_sched();
+	__enable_irq();	
+	
+	Q_ERROR();
+	
+}
+
 void OS_sched(void){
-	
-	extern OSThread blinky1;
-	extern OSThread blinky2;
-	
-	if(OS_curr == &blinky1){
-		OS_next = &blinky2;
+	++OS_currIndex;
+	if(OS_currIndex == OS_threadNum){
+		OS_currIndex = 0U;
 	}
-	else{
-		OS_next = &blinky1;
-	}
+	OS_next = OS_Thread[OS_currIndex];
 	
 	if (OS_next != OS_curr){
 		*(uint32_t volatile *)0xE000ED04 = (1U << 28); //PENDSVSET
@@ -62,6 +74,12 @@ void OSThread_start(
 		for(sp = sp - 1U;sp >= stk_limit; --sp){
 			*sp = 0xDEEDBEEFU;
 		}
+		
+		Q_ASSERT(OS_threadNum < Q_DIM(OS_Thread));
+		
+		/*register the thread with the os */
+		OS_Thread[OS_threadNum] = me;
+		++OS_threadNum;
 				
 }
 
@@ -122,7 +140,7 @@ void PendSV_Handler (void){
 
 			//POP Registers r4 to r11
 			"POP			{r4-r11}\n"
-			"CPSID		I\n"
+			"CPSIE		I\n"
 //			"ADD      sp,sp,#0x04\n"
 //			"BX				lr\n"
 

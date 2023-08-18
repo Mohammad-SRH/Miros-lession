@@ -3,6 +3,9 @@
  #include <stdint.h>
  
  #define BSP_TICKS_PER_SEC    100U
+ #define LED1									GPIO_ODR_ODR12
+ #define LED2									GPIO_ODR_ODR13
+ #define LED3									GPIO_ODR_ODR14
  
 	void SysTick_Handler (void);
 	uint32_t BSP_tickctr (void);

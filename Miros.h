@@ -17,8 +17,10 @@ void OSThread_start(
 
 void OS_init (void);
 
-void OS_sched(void);
+void OS_sched (void);
 
+void OS_run (void);
 
+void OS_onStartup (void);
 
 #endif
