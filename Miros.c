@@ -10,9 +10,28 @@ OSThread * volatile OS_next;	/*pointer to the next thread */
 OSThread *OS_Thread[32 + 1];	/*Array of thread start from */
 uint8_t OS_threadNum;					/*number of thread tarted so far */
 uint8_t OS_currIndex;					/*current thread index for round robin scheual */
+uint32_t OS_readySet;
 
-void OS_init (void){
+
+OSThread idleThread;
+
+void main_idleThread (void){
+		
+	while(1){
+
+		OS_onIdle();
+	}
+	
+}
+
+
+void OS_init (void *stcsto,uint32_t stcSize){
 	*(uint32_t volatile*)0xE000ED20 |= (0xFFU << 16);
+	
+	/* start idle Thread */
+	OSThread_start(&idleThread,
+								&main_idleThread,
+								stcsto,stcSize);
 }
 
 void OS_run(void){
@@ -26,10 +45,46 @@ void OS_run(void){
 	
 }
 
+void OS_tick (void){
+	
+	uint8_t n;
+	for(n = 1U ;n < OS_threadNum; ++n){
+			if(OS_Thread[n]->timeout != 0U){
+				--OS_Thread[n]->timeout;
+				if(OS_Thread[n]->timeout == 0U){
+					OS_readySet |= (1U << (n-1U));
+				}
+			}
+	}
+	
+}
+
+void OS_Delay (uint32_t ticks){
+	
+	__disable_irq();
+	
+	Q_REQUIRE(OS_curr != OS_Thread[0]);
+	 
+	OS_curr->timeout = ticks;
+	OS_readySet &= ~(1U << (OS_currIndex -1U));
+	OS_sched();
+	__enable_irq();
+
+
+}
+
 void OS_sched(void){
-	++OS_currIndex;
-	if(OS_currIndex == OS_threadNum){
-		OS_currIndex = 0U;
+	
+	if(OS_readySet == 0U){
+			OS_currIndex = 0U;	//idle thread
+	}
+	else{ 
+		do{
+				++OS_currIndex;
+				if(OS_currIndex == OS_threadNum){
+					OS_currIndex = 1U;
+				}		
+		}while((OS_readySet & (1U << (OS_currIndex - 1U)))==0);
 	}
 	OS_next = OS_Thread[OS_currIndex];
 	
@@ -79,28 +134,16 @@ void OSThread_start(
 		
 		/*register the thread with the os */
 		OS_Thread[OS_threadNum] = me;
+		
+		if (OS_threadNum > 0U){
+			OS_readySet |= (1U << (OS_threadNum -1U));
+		}
 		++OS_threadNum;
 				
 }
 
 
-//void PendSV_Handler (void){
-//	
-//	void *sp;
-//	
-//	__disable_irq();
-//	if (OS_curr != (OSThread *)0){		
-//		//push registers
-//		OS_curr->sp = sp;
-//		
-//	}
-//	
-//	sp = OS_next->sp;
-//	OS_curr = OS_next;
-//	
-//	//pop registers
-//	__enable_irq();
-//}
+
 
 void PendSV_Handler (void){
 	
@@ -147,5 +190,7 @@ void PendSV_Handler (void){
 	);
 	
 }
+
+
 
 

@@ -16,31 +16,13 @@ void bsp_init (void){
 
 void SysTick_Handler (void){
 
-	++tick;	
+	OS_tick();	
 	__disable_irq();
 	OS_sched();
 	__enable_irq();
 
 }
 
-uint32_t BSP_tickctr (void){
-	
-	uint32_t tickctr;
-	__disable_irq();
-	tickctr = tick;
-	__enable_irq();
-	
-	return tickctr;
-	
-}
-
-void BSP_Delay (uint32_t prescale){
-	
-	uint32_t start;
-	start = BSP_tickctr();
-	while((BSP_tickctr()-start) < prescale);
-
-}
 
 
 void LED1_ON (void){
@@ -85,6 +67,10 @@ void Q_onAssert(char const *module,int loc){
 	NVIC_SystemReset();
 }
 
+void OS_onIdle (void){
+	
+	
+}
 
 
 

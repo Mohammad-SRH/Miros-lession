@@ -11,9 +11,9 @@ void main_blinky1 (void){
 	while(1){
 	
 		LED1_ON();
-//		BSP_Delay(BSP_TICKS_PER_SEC/4);
+		OS_Delay(BSP_TICKS_PER_SEC/4);
 		LED1_OFF();
-//		BSP_Delay((BSP_TICKS_PER_SEC*3)/4);
+		OS_Delay((BSP_TICKS_PER_SEC*3)/4);
 	}
 	
 }
@@ -26,9 +26,9 @@ void main_blinky2 (void){
 	while(1){
 	
 		LED2_ON();
-//		BSP_Delay(BSP_TICKS_PER_SEC/2);
+		OS_Delay(BSP_TICKS_PER_SEC/2);
 		LED2_OFF();
-//		BSP_Delay(BSP_TICKS_PER_SEC/3);
+		OS_Delay(BSP_TICKS_PER_SEC/3);
 	}
 		
 }
@@ -41,17 +41,19 @@ void main_blinky3 (void){
 	while(1){
 	
 		LED3_ON();
-//		BSP_Delay(BSP_TICKS_PER_SEC/3);
+		OS_Delay(BSP_TICKS_PER_SEC/3);
 		LED3_OFF();
-//		BSP_Delay(BSP_TICKS_PER_SEC *3 / 5);
+		OS_Delay(BSP_TICKS_PER_SEC *3 / 5);
 	}
 		
 }
 
+uint32_t stack_idleThread[40];
+
 int main (void){
 		
 	bsp_init();
-	OS_init();
+	OS_init(stack_idleThread,sizeof(stack_idleThread));
 	
 	
 	OSThread_start(&blinky1,

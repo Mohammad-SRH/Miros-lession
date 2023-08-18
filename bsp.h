@@ -8,7 +8,6 @@
  #define LED3									GPIO_ODR_ODR14
  
 	void SysTick_Handler (void);
-	uint32_t BSP_tickctr (void);
 	void bsp_init (void);
 	void LED1_ON (void);
 	void LED1_OFF (void);
@@ -16,7 +15,7 @@
 	void LED2_OFF (void);
 	void LED3_ON (void);
 	void LED3_OFF (void);
-	void BSP_Delay (uint32_t prescale);
+
 	
  
  
