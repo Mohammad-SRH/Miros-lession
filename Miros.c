@@ -10,8 +10,19 @@ void OS_init (void){
 }
 
 void OS_sched(void){
+	
+	extern OSThread blinky1;
+	extern OSThread blinky2;
+	
+	if(OS_curr == &blinky1){
+		OS_next = &blinky2;
+	}
+	else{
+		OS_next = &blinky1;
+	}
+	
 	if (OS_next != OS_curr){
-		*(uint32_t volatile *)0xE000ED04 = (1U << 28);
+		*(uint32_t volatile *)0xE000ED04 = (1U << 28); //PENDSVSET
 	}
 }
 
@@ -55,32 +66,68 @@ void OSThread_start(
 }
 
 
+//void PendSV_Handler (void){
+//	
+//	void *sp;
+//	
+//	__disable_irq();
+//	if (OS_curr != (OSThread *)0){		
+//		//push registers
+//		OS_curr->sp = sp;
+//		
+//	}
+//	
+//	sp = OS_next->sp;
+//	OS_curr = OS_next;
+//	
+//	//pop registers
+//	__enable_irq();
+//}
+
 void PendSV_Handler (void){
 	
-		
-	__disable_irq();
-	if (OS_curr != (OSThread *)0){		
-		__asm ("PUSH		{r4-r11}");
-		__asm("LDR      r0,=OS_curr");
-		__asm("LDR      r1,[r0,#0x00]");
-		__asm("LDR      r1,[r1,#0x00]");
-		__asm("STR      sp,[r1,#0x00]");
+	__asm(
+			//Disable Interupts
+			"CPSID		I\n"
+			
+			//if (OS_curr != (OSThread *)0( {
+			"LDR			r0,=OS_curr\n"
+			"LDR      r0,[r0,#0x00]\n"
+			"CBZ      r0,PendSV_restore\n"
 
-	}
-//	sp = OS_next->sp;	
-//	__asm("MOVW     r0,=OS_next");
-//	__asm("MOVT     r0,=OS_next");
-	__asm("LDR      r0,=OS_next");
-//	__asm("LDR      r1,[r0,#0x00]");
-	__asm("LDR      r0,[r0,#0x00]");
-	__asm("LDR      sp,[r0,#0x00]");
+			//Push r4 to r11 register
+			"PUSH			{r4-r11}\n"
 	
-	OS_curr = OS_next;
+			//OS_curr->sp = sp;
+//			"LDR      r0,[sp,#0x00]\n"
+//			"LDR			r1,=OS_curr\n"
+			"LDR      r1,[r0,#0x00]\n"
+//			"LDR			sp,[r1,#0x00]\n"
+			"STR      r0,[r1,#0x00]\n"
 	
-	__asm ("POP	{r4-r11}");
-	__enable_irq();
 	
+			"PendSV_restore:\n"
+			//sp = OS_next->sp; 
+			"LDR			r0,=OS_next\n"
+			"LDR      r1,[r0,#0x00]\n"
+//			"LDR      r1,[r1,#0x00]\n"
+			"LDR      sp,[r1,#0x00]\n"
+			
+			
+			//OS_curr = OS_next
+			"LDR      r0,[r0,#0x00]\n"
+//			"LDR      r0,=OS_next\n"
+			"LDR			r1,=OS_curr\n"
+			"STR      r0,[r1,#0x00]\n"
 
+			//POP Registers r4 to r11
+			"POP			{r4-r11}\n"
+			"CPSID		I\n"
+//			"ADD      sp,sp,#0x04\n"
+//			"BX				lr\n"
+
+	);
+	
 }
 
 
