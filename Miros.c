@@ -160,32 +160,29 @@ void PendSV_Handler (void){
 			"PUSH			{r4-r11}\n"
 	
 			//OS_curr->sp = sp;
-//			"LDR      r0,[sp,#0x00]\n"
-//			"LDR			r1,=OS_curr\n"
-			"LDR      r1,[r0,#0x00]\n"
-//			"LDR			sp,[r1,#0x00]\n"
-			"STR      r0,[r1,#0x00]\n"
+			"LDR			r1,=OS_curr\n"
+			"LDR      r1,[r1,#0x00]\n"
+			"STR      sp,[r1,#0x00]\n"
 	
 	
 			"PendSV_restore:\n"
 			//sp = OS_next->sp; 
 			"LDR			r0,=OS_next\n"
 			"LDR      r1,[r0,#0x00]\n"
-//			"LDR      r1,[r1,#0x00]\n"
 			"LDR      sp,[r1,#0x00]\n"
 			
 			
 			//OS_curr = OS_next
+
+			"LDR      r0,=OS_next\n"
 			"LDR      r0,[r0,#0x00]\n"
-//			"LDR      r0,=OS_next\n"
-			"LDR			r1,=OS_curr\n"
+			"LDR	  r1,=OS_curr\n"
 			"STR      r0,[r1,#0x00]\n"
 
 			//POP Registers r4 to r11
 			"POP			{r4-r11}\n"
 			"CPSIE		I\n"
-//			"ADD      sp,sp,#0x04\n"
-//			"BX				lr\n"
+			"BX				lr\n"
 
 	);
 	
